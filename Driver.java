@@ -1,4 +1,4 @@
-import javax.swing.plaf.synth.SynthStyle;
+
 
 public class Driver {
     public static void main(String [] args) {
@@ -8,33 +8,54 @@ public class Driver {
         System.out.println(p.evaluate(3));
 
         double [] c1 = {6,0,0,5};
-        int [] e1 = {0,3,1,2};
+        int [] e1 = {0,1,2,3};
         Polynomial p1 = new Polynomial(c1, e1);
 
         double [] c2 = {0,-2,0,0,-9};
         int[] e2 = {0,1,2,3,4};
         Polynomial p2 = new Polynomial(c2, e2);
 
-        double [] c4 = {6,0,5,0};
-        int[] e4 = {0,1,2,3};
-        Polynomial p4 = new Polynomial(c4, e4);
+        // double [] c4 = {3,2};
+        // int[] e4 = {2,0};
+        // Polynomial p4 = new Polynomial(c4, e4);
 
-        if(p1 != p4){
-            System.out.println("not equal");
-        }
+        // double [] c5 = {1,4};
+        // int[] e5 = {3,1};
+        // Polynomial p5 = new Polynomial(c5, e5);
 
-        int len = p1.coefficients.length;
+        // if(p1 != p4){
+        //     System.out.println("not equal");
+        // }
+
+        
 
         
         
         p1.arrange();
         
-        
+        p1.simplify();
 
-        for(int i = 0; i < len; i++){
-            System.out.print(p1.exponents[i]);
-            System.out.print(p1.coefficients[i]);
+        int len1 = p1.coefficients.length;
+
+        // for(int i = 0; i < len; i++){
+        //     System.out.print(p1.exponents[i]);
+        //     System.out.print(p1.coefficients[i]);
+        // }
+
+        for(int i = 0; i < len1; i++){
+            System.out.println(p1.coefficients[i]);
+            System.out.println(p1.exponents[i]);
         }
+
+
+        // p1.removeRedundancy();
+
+        // int len2 = p1.coefficients.length;
+
+        // for(int i = 0; i < len2; i++){
+        //     System.out.println(p1.coefficients[i]);
+        //     System.out.println(p1.exponents[i]);
+        // }
 
         Polynomial s = p1.add(p2);
 
@@ -52,13 +73,27 @@ public class Driver {
         int [] e8 = {1,0};
         Polynomial p8 = new Polynomial(c8, e8);
 
-        Polynomial p9 = p7.multiply(p8);
+        //Polynomial p9 = p7.multiply(p8);
 
-        int leno = p9.coefficients.length;
-        for(int i = 0; i < leno; i++){
-            System.out.print(p9.exponents[i]);
-            System.out.print(p9.coefficients[i]);
-        }
+        //int leno = p9.coefficients.length;
+        //for(int i = 0; i < leno; i++){
+           // System.out.print(p9.exponents[i]);
+          //  System.out.print(p9.coefficients[i]);
+       // }
         
+
+       Polynomial mult = p7.multiply(p8);
+
+       int len2 = mult.coefficients.length;
+
+       for(int i = 0; i < len2; i++){
+            System.out.println(mult.coefficients[i]);
+            System.out.println(mult.exponents[i]);
+        }
+
+
+        
+		
+
     }
 }

@@ -1,7 +1,10 @@
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.io.File;
+import java.util.Scanner;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.FileNotFoundException;
 
 public class Polynomial {
 
@@ -9,7 +12,9 @@ public class Polynomial {
     double[] coefficients;
     int[] exponents;
 
-    //methods
+
+    //constructs
+
 
     public Polynomial() {
         coefficients = new double[] {0.0};
@@ -21,30 +26,125 @@ public class Polynomial {
         this.exponents = expos.clone();
     }
 
-    
-
-    public void arrange(){
-
-
-        int len = this.coefficients.length;
-
-        double[] newcoeff = new double[len];
-        int[] newexpo = new int[len];
-
+    // New constructor that initializes Polynomial from file
+    public Polynomial(File file){
         
+        try (Scanner scanner = new Scanner(file)) {
 
-        for(int i = 0; i < len; i++){
-            for(int j = 0; j < len; j++){
-                if( this.exponents[j] == i){
-                    newcoeff[i] = this.coefficients[j];
-                    newexpo[i] = i;
+            
+            if(scanner.hasNextLine()){
+                String content = scanner.nextLine();
+
+                content = content.replace("-", "+-");
+                String[] components = content.split("\\+");
+
+                this.coefficients = new double[components.length];
+                this.exponents = new int[components.length];
+
+                for(int i = 0; i < components.length; i++){
+
+                    if (!components[i].equals("") && !components[i].equals("0")) {
+
+                        String[] temp = components[i].split("x");
+                        double coeff = Double.parseDouble(temp[0]);
+                        int expo = Integer.parseInt(temp[1]);
+
+                        this.add_component(coeff, expo);
+                    }
+
+                }
+            }
+            else {
+                System.out.println("File is empty or doesn't contain a valid polynomial.");
+            }
+
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found");
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid number format");
+            System.out.println(e);
+        }
+    }
+
+
+    public void arrange() {
+        int len = this.coefficients.length;
+        for (int i = 0; i < len - 1; i++) {
+            for (int j = 0; j < len - i - 1; j++) {
+                if (this.exponents[j] > this.exponents[j + 1]) {
+                    // Swap exponents
+                    int tempExpo = this.exponents[j];
+                    this.exponents[j] = this.exponents[j + 1];
+                    this.exponents[j + 1] = tempExpo;
+    
+                    // Swap coefficients
+                    double tempCoeff = this.coefficients[j];
+                    this.coefficients[j] = this.coefficients[j + 1];
+                    this.coefficients[j + 1] = tempCoeff;
                 }
             }
         }
+    }
 
-        this.coefficients = newcoeff.clone();
-        this.exponents = newexpo.clone();
+    public void simplify() {
+        // Temporary lists to store the new coefficients and exponents
+        List<Double> newCoefficients = new ArrayList<>();
+        List<Integer> newExponents = new ArrayList<>();
+    
+        // Iterate through the polynomial and remove terms with zero coefficients
+        for (int i = 0; i < this.coefficients.length; i++) {
+            if (this.coefficients[i] != 0.0) {
+                newCoefficients.add(this.coefficients[i]);
+                newExponents.add(this.exponents[i]);
+            }
+        }
+    
+        // Convert the lists back to arrays
+        this.coefficients = new double[newCoefficients.size()];
+        this.exponents = new int[newExponents.size()];
+    
+        for (int i = 0; i < newCoefficients.size(); i++) {
+            this.coefficients[i] = newCoefficients.get(i);
+            this.exponents[i] = newExponents.get(i);
+        }
+    }
 
+
+    // Add a new term to the polynomial
+    public void add_component(double coeff, int expo) {
+        // Check if the exponent already exists in the polynomial
+        boolean found = false;
+        for (int i = 0; i < exponents.length; i++) {
+            if (exponents[i] == expo) {
+                // If the exponent exists, add the new coefficient to the existing one
+                coefficients[i] += coeff;
+                found = true;
+                break;
+            }
+        }
+
+        // If the exponent doesn't exist, add the new term to the arrays
+        if (!found) {
+            // Create new arrays with an additional space for the new term
+            double[] newCoefficients = new double[coefficients.length + 1];
+            int[] newExponents = new int[exponents.length + 1];
+
+            // Copy existing terms
+            System.arraycopy(coefficients, 0, newCoefficients, 0, coefficients.length);
+            System.arraycopy(exponents, 0, newExponents, 0, exponents.length);
+
+            // Add the new term
+            newCoefficients[newCoefficients.length - 1] = coeff;
+            newExponents[newExponents.length - 1] = expo;
+
+            // Update the polynomial arrays
+            this.coefficients = newCoefficients;
+            this.exponents = newExponents;
+        }
+
+        // Arrange and simplify the polynomial after adding the new term
+        this.arrange();
+        this.simplify();
     }
 
     public Polynomial add(Polynomial poly) {
@@ -103,47 +203,55 @@ public class Polynomial {
             newCoefficients[k] = resultCoefficients.get(k);
             newExponents[k] = resultExponents.get(k);
         }
-    
+        
+
+        Polynomial resutpoly = new Polynomial(newCoefficients, newExponents);
+
+        //arranging
+        resutpoly.arrange();
+
+        //simplify
+        resutpoly.simplify();
+
+
         // Return the new Polynomial
-        return new Polynomial(newCoefficients, newExponents);
+        return resutpoly;
     }
     
-    
-    public Polynomial multiply(Polynomial poly) {
-    // Temporary storage for the result
-    Map<Integer, Double> resultMap = new HashMap<>();
 
-    // Multiply each term in this polynomial by each term in the input polynomial
-    for (int i = 0; i < this.coefficients.length; i++) {
-        for (int j = 0; j < poly.coefficients.length; j++) {
-            int newExpo = this.exponents[i] + poly.exponents[j]; // Sum the exponents
-            double newCoeff = this.coefficients[i] * poly.coefficients[j]; // Multiply the coefficients
+    public Polynomial multiply(Polynomial poly){
 
-            // If this exponent already exists, add the new coefficient to the existing one
-            resultMap.put(newExpo, resultMap.getOrDefault(newExpo, 0.0) + newCoeff);
+        //arrange the polynomials
+        this.arrange();
+        poly.arrange();
+
+        Polynomial resultpoly = new Polynomial();
+
+        for(int i = 0; i < poly.coefficients.length; i++){
+
+            for(int j = 0; j < this.coefficients.length; j++){
+
+                double[] tempcoeff = new double[] {poly.coefficients[i] * this.coefficients[j]};
+                int[] tempexpo = new int[] {poly.exponents[i] + this.exponents[j]};
+
+                Polynomial temppoly = new Polynomial(tempcoeff, tempexpo);
+
+                resultpoly = resultpoly.add(temppoly);
+            }
+
         }
+
+        //arranging
+        resultpoly.arrange();
+
+        //simplify
+        resultpoly.simplify();
+
+        //returning the result
+        return resultpoly;
+
     }
-
-    // Convert the map to arrays for the new Polynomial
-    int size = resultMap.size();
-    double[] newCoefficients = new double[size];
-    int[] newExponents = new int[size];
-
-    int index = 0;
-    // Extract the combined terms from the map and fill the arrays
-    for (Map.Entry<Integer, Double> entry : resultMap.entrySet()) {
-        newExponents[index] = entry.getKey();
-        newCoefficients[index] = entry.getValue();
-        index++;
-    }
-
-    // Sort the resulting polynomial by exponents in ascending order
-    // You can use the arrange() method here or sort directly
-    Polynomial result = new Polynomial(newCoefficients, newExponents);
-    result.arrange(); // Arrange the resulting polynomial
-
-    return result;
-}
+    
 
 
     public double evaluate(double eva){
@@ -160,9 +268,72 @@ public class Polynomial {
         return result;
     }
 
+
     public boolean hasRoot(double x){
 
         return Math.abs(evaluate(x)) < 1e-9; 
         // Use a small tolerance to account for floating-point precision
+    }
+
+
+    // Method to save the polynomial to a file in textual format
+    public void saveToFile(String fileName){
+        try{
+            FileWriter writer = new FileWriter(fileName);
+        
+            // Build the polynomial string
+            StringBuilder polyStr = new StringBuilder();
+
+            this.arrange();
+            this.simplify();
+            
+            if(this.coefficients.length == 0){
+                polyStr.append("0");
+            }
+            for (int i = 0; i < coefficients.length; i++) {
+                double coeff = coefficients[i];
+                int expo = exponents[i];
+
+                if (i > 0 && coeff > 0) {
+                    polyStr.append("+");
+                }
+            
+                if (expo == 0) {
+                    // Constant term
+                    polyStr.append(coeff);
+                } else if (expo == 1) {
+                    // Linear term
+                    if (coeff == 1.0) {
+                        polyStr.append("x");
+                    } else if (coeff == -1.0) {
+                        polyStr.append("-x");
+                    } else {
+                        polyStr.append(coeff).append("x");
+                    }
+                } else {
+                    // Higher degree term
+                    if (coeff == 1.0) {
+                        polyStr.append("x").append(expo);
+                    } else if (coeff == -1.0) {
+                        polyStr.append("-x").append(expo);
+                    } else {
+                        polyStr.append(coeff).append("x").append(expo);
+                    }
+                }
+            }
+
+            // Write the string to the file
+            writer.write(polyStr.toString());
+            writer.close();
+        }
+
+        catch (FileNotFoundException e) {
+            System.out.println("File not found");
+        } catch (IOException e) {
+            System.out.println("An error occurred while writing to the file");
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid number format");
+            System.out.println(e);
+        }
     }
 }
